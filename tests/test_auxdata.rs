@@ -9,7 +9,7 @@ pub fn check_auxdata(context: *mut sqlite3_context, values: &[*mut sqlite3_value
     assert!(api::auxdata_get::<String>(context, 1).is_none());
 
     let b = Box::new(String::from(value));
-    api::auxdata_set(context, 1, b, Some(cleanup));
+    api::auxdata_set(context, 1, b);
 
     let entry = api::auxdata_get::<String>(context, 1).unwrap();
     assert!(entry == value);
@@ -17,10 +17,6 @@ pub fn check_auxdata(context: *mut sqlite3_context, values: &[*mut sqlite3_value
     api::result_text(context, &format!("{label}={value}")).unwrap();
 
     Ok(())
-}
-
-unsafe extern "C" fn cleanup(p: *mut c_void) {
-    drop(Box::from_raw(p.cast::<*mut String>()));
 }
 
 #[sqlite_entrypoint]
