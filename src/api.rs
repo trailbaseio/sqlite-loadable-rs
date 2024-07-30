@@ -375,23 +375,27 @@ pub fn result_pointer<T>(context: *mut sqlite3_context, name: &[u8], object: T) 
     };
 }
 
-// TODO maybe take in a Box<T>?
 /// [`sqlite3_set_auxdata`](https://www.sqlite.org/c3ref/get_auxdata.html)
-pub fn auxdata_set(
+pub fn auxdata_set<T>(
     context: *mut sqlite3_context,
     col: i32,
-    p: *mut c_void,
+    p: Box<T>,
     d: Option<unsafe extern "C" fn(*mut c_void)>,
 ) {
+    let raw = Box::into_raw(p).cast::<c_void>();
     unsafe {
-        sqlite3ext_set_auxdata(context, col, p, d);
+        sqlite3ext_set_auxdata(context, col, raw, d);
     }
 }
 
-// TODO maybe return a Box<T>?
 /// [`sqlite3_get_auxdata`](https://www.sqlite.org/c3ref/get_auxdata.html)
-pub fn auxdata_get(context: *mut sqlite3_context, col: i32) -> *mut c_void {
-    unsafe { sqlite3ext_get_auxdata(context, col) }
+pub fn auxdata_get<'a, T>(context: *mut sqlite3_context, col: i32) -> Option<&'a mut T> {
+    let ptr = unsafe { sqlite3ext_get_auxdata(context, col).cast::<T>() };
+    if ptr.is_null() {
+        None
+    } else {
+        Some(unsafe { &mut *ptr })
+    }
 }
 
 pub fn context_db_handle(context: *mut sqlite3_context) -> *mut sqlite3 {
