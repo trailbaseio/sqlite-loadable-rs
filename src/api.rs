@@ -118,6 +118,9 @@ pub fn mprintf(base: &str) -> Result<*mut c_char, MprintfError> {
 /// from the given sqlite3_value, as a u8 slice.
 pub fn value_blob<'a>(value: &*mut sqlite3_value) -> &'a [u8] {
     let n = value_bytes(value);
+    if n == 0 {
+        return &[];
+    }
     let b = unsafe { sqlite3ext_value_blob(value.to_owned()) };
     return unsafe { from_raw_parts(b.cast::<u8>(), n as usize) };
 }
