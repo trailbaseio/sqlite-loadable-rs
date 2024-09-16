@@ -40,10 +40,10 @@ fn connect(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) -> Resu
 
 #[sqlite_entrypoint]
 pub fn sqlite3_scalarrs_init(db: *mut sqlite3) -> Result<()> {
-    let flags = FunctionFlags::UTF8 | FunctionFlags::DETERMINISTIC;
-    define_scalar_function(db, "surround_rs", 1, surround, flags)?;
-    define_scalar_function(db, "connect", -1, connect, flags)?;
-    define_scalar_function(db, "yo_rs", 0, yo, flags)?;
-    define_scalar_function(db, "add_rs", 2, add, flags)?;
+    let flags = || FunctionFlags::UTF8 | FunctionFlags::DETERMINISTIC;
+    define_scalar_function(db, "surround_rs", 1, surround, flags())?;
+    define_scalar_function(db, "connect", -1, connect, flags())?;
+    define_scalar_function(db, "yo_rs", 0, yo, flags())?;
+    define_scalar_function(db, "add_rs", 2, add, flags())?;
     Ok(())
 }

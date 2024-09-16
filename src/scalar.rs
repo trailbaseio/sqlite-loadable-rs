@@ -62,7 +62,7 @@ fn create_function_v2(
             db,
             cname.as_ptr(),
             num_args,
-            func_flags.bits,
+            func_flags.bits(),
             p_app,
             x_func,
             x_step,
@@ -137,6 +137,52 @@ where
     )
 }
 
+/// Defines a new scalar function on the given database connection.
+///
+/// # Example
+/// ```rust
+/// fn xyz_version(context: *mut sqlite3_context, _values: &[*mut sqlite3_value]) {
+///   context_result_text(context, &format!("v{}", env!("CARGO_PKG_VERSION")))?;
+/// }
+///
+/// define_scalar_void_function(db, "xyz_version", 0, xyz_version)?;
+/// ```
+pub fn define_scalar_void_function<F>(
+    db: *mut sqlite3,
+    name: &str,
+    num_args: c_int,
+    x_func: F,
+    func_flags: FunctionFlags,
+) -> Result<()>
+where
+    F: Fn(*mut sqlite3_context, &[*mut sqlite3_value]),
+{
+    let function_pointer: *mut F = Box::into_raw(Box::new(x_func));
+
+    unsafe extern "C" fn x_func_wrapper<F>(
+        context: *mut sqlite3_context,
+        argc: c_int,
+        argv: *mut *mut sqlite3_value,
+    ) where
+        F: Fn(*mut sqlite3_context, &[*mut sqlite3_value]),
+    {
+        let boxed_function: *mut F = sqlite3ext_user_data(context).cast::<F>();
+        (*boxed_function)(context, slice::from_raw_parts(argv, argc as usize));
+    }
+
+    create_function_v2(
+        db,
+        name,
+        num_args,
+        func_flags,
+        function_pointer.cast::<c_void>(),
+        Some(x_func_wrapper::<F>),
+        None,
+        None,
+        None,
+    )
+}
+
 /// Defines a new scalar function, but with the added ability to pass in an arbritary
 /// application "pointer" as any rust type. Can be accessed in the callback
 /// function as the 3rd argument, as a reference.
@@ -177,7 +223,7 @@ where
                 }
             }
         }
-        Box::into_raw(b);
+        let _ = Box::into_raw(b);
     }
     create_function_v2(
         db,
@@ -278,7 +324,7 @@ where
                 }
             }
         }
-        Box::into_raw(b);
+        let _ = Box::into_raw(b);
     }
 
     (x_func_wrapper::<F, T>, app_pointer.cast())

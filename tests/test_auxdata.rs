@@ -1,6 +1,5 @@
 use sqlite_loadable::prelude::*;
 use sqlite_loadable::{api, define_scalar_function, Result};
-use std::os::raw::c_void;
 
 pub fn check_auxdata(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) -> Result<()> {
     let label = api::value_text(values.get(0).unwrap()).unwrap();

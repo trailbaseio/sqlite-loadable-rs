@@ -38,7 +38,9 @@ impl<'vtab> VTab<'vtab> for CharactersTable {
         _aux: Option<&Self::Aux>,
         _args: VTabArguments,
     ) -> Result<(String, CharactersTable)> {
-        let vtab = CharactersTable { base: unsafe { mem::zeroed() } };
+        let vtab = CharactersTable {
+            base: unsafe { mem::zeroed() },
+        };
         // TODO db.config(VTabConfig::Innocuous)?;
         Ok((CREATE_SQL.to_owned(), vtab))
     }

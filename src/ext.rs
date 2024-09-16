@@ -90,6 +90,7 @@ pub unsafe fn sqlite3ext_value_bytes(arg1: *mut sqlite3_value) -> i32 {
 }
 
 #[cfg(feature = "static")]
+#[inline(always)]
 pub unsafe fn sqlite3ext_value_blob(arg1: *mut sqlite3_value) -> *const c_void {
     libsqlite3_sys::sqlite3_value_blob(arg1)
 }
@@ -264,6 +265,7 @@ pub unsafe fn sqlite3ext_value_pointer(arg1: *mut sqlite3_value, p: *mut c_char)
 }
 
 #[cfg(feature = "static")]
+#[inline(always)]
 pub unsafe fn sqlite3ext_result_int(context: *mut sqlite3_context, v: c_int) {
     libsqlite3_sys::sqlite3_result_int(context, v)
 }
@@ -283,6 +285,7 @@ pub unsafe fn sqlite3ext_result_int(context: *mut sqlite3_context, v: c_int) {
 // or serde??
 // or slice??
 #[cfg(feature = "static")]
+#[inline(always)]
 pub unsafe fn sqlite3ext_result_blob(context: *mut sqlite3_context, p: *const c_void, n: i32) {
     libsqlite3_sys::sqlite3_result_blob(context, p, n, Some(mem::transmute(-1_isize)));
 }
@@ -592,6 +595,7 @@ pub unsafe fn sqlite3ext_context_db_handle(context: *mut sqlite3_context) -> *mu
 }
 
 #[cfg(feature = "static")]
+#[inline(always)]
 pub unsafe fn sqlite3ext_user_data(context: *mut sqlite3_context) -> *mut c_void {
     libsqlite3_sys::sqlite3_user_data(context)
 }
@@ -609,7 +613,7 @@ pub unsafe fn sqlite3ext_mprintf(s: *const c_char) -> *mut c_char {
 }
 
 #[cfg(feature = "static")]
-pub unsafe fn sqlite3ext_auto_extension(f: unsafe extern "C" fn()) -> i32 {
+pub unsafe fn sqlite3ext_auto_extension(f: unsafe extern "C" fn(*mut libsqlite3_sys::sqlite3, *mut *mut i8, *const libsqlite3_sys::sqlite3_api_routines) -> i32) -> i32 {
     libsqlite3_sys::sqlite3_auto_extension(Some(f))
 }
 #[cfg(not(feature = "static"))]

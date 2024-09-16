@@ -116,6 +116,7 @@ pub fn mprintf(base: &str) -> Result<*mut c_char, MprintfError> {
 
 /// Returns the [`sqlite3_value_blob`](https://www.sqlite.org/c3ref/value_blob.html) result
 /// from the given sqlite3_value, as a u8 slice.
+#[inline(always)]
 pub fn value_blob<'a>(value: &*mut sqlite3_value) -> &'a [u8] {
     let n = value_bytes(value);
     if n == 0 {
@@ -127,6 +128,7 @@ pub fn value_blob<'a>(value: &*mut sqlite3_value) -> &'a [u8] {
 
 /// Returns the [`sqlite3_value_bytes`](https://www.sqlite.org/c3ref/value_blob.html) result
 /// from the given sqlite3_value, as i32.
+#[inline(always)]
 pub fn value_bytes(value: &*mut sqlite3_value) -> i32 {
     unsafe { sqlite3ext_value_bytes(value.to_owned()) }
 }
@@ -135,6 +137,7 @@ pub fn value_bytes(value: &*mut sqlite3_value) -> i32 {
 /// from the given sqlite3_value, as a str. If the number of bytes of the underlying value
 /// is 0, then an empty string is returned. A UTF8 Error is returned if there are problems
 /// encoding the string.
+#[inline(always)]
 pub fn value_text<'a>(value: &*mut sqlite3_value) -> Result<&'a str, Utf8Error> {
     let n = value_bytes(value);
     if n == 0 {
@@ -250,6 +253,7 @@ pub fn value_has_json_subtype(value: &*mut sqlite3_value) -> bool {
 /// Calls [`sqlite3_result_text`](https://www.sqlite.org/c3ref/result_blob.html)
 /// to represent that a function returns a string with the given value. Fails if
 /// the string length is larger than i32 maximum value.
+#[inline(always)]
 pub fn result_text<S: AsRef<str>>(context: *mut sqlite3_context, text: S) -> crate::Result<()> {
     let bytes = text.as_ref().as_bytes();
     unsafe {
@@ -275,6 +279,7 @@ unsafe extern "C" fn result_text_destructor(raw: *mut c_void) {
 
 /// Calls [`sqlite3_result_int`](https://www.sqlite.org/c3ref/result_blob.html)
 /// to represent that a function returns an int32 with the given value.
+#[inline(always)]
 pub fn result_int(context: *mut sqlite3_context, i: i32) {
     unsafe { sqlite3ext_result_int(context, i) };
 }
@@ -333,12 +338,9 @@ pub fn result_error_code(context: *mut sqlite3_context, code: i32) {
 }
 
 /// Calls [`result_int`] with `value=1` for true, or `value=0` for false.
+#[inline(always)]
 pub fn result_bool(context: *mut sqlite3_context, value: bool) {
-    if value {
-        result_int(context, 1)
-    } else {
-        result_int(context, 0)
-    }
+    unsafe { sqlite3ext_result_int(context, if value { 1 } else { 0 }) };
 }
 
 /// Result the given JSON as a value that other SQLite JSON functions expect: a stringified
