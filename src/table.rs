@@ -325,6 +325,9 @@ pub fn define_table_function<'vtab, T: VTab<'vtab> + 'vtab>(
     let m = &Module {
         base: sqlite3_module {
             iVersion: 2,
+            xIntegrity: None,
+            xPreparedSql: None,
+            reserved: [None, None, None, None, None],
             xCreate: None,
             xConnect: Some(rust_connect::<T>),
             xBestIndex: Some(rust_best_index::<T>),
@@ -381,6 +384,9 @@ pub fn define_table_function_with_find<'vtab, T: VTabFind<'vtab> + 'vtab>(
     let m = &Module {
         base: sqlite3_module {
             iVersion: 2,
+            xIntegrity: None,
+            xPreparedSql: None,
+            reserved: [None, None, None, None, None],
             xCreate: None,
             xConnect: Some(rust_connect::<T>),
             xBestIndex: Some(rust_best_index::<T>),
@@ -447,6 +453,9 @@ pub fn define_virtual_table<'vtab, T: VTab<'vtab> + 'vtab>(
     let m = &Module {
         base: sqlite3_module {
             iVersion: 2,
+            xIntegrity: None,
+            xPreparedSql: None,
+            reserved: [None, None, None, None, None],
             xCreate: Some(rust_create::<T>),
             xConnect: Some(rust_connect::<T>),
             xBestIndex: Some(rust_best_index::<T>),
@@ -501,6 +510,9 @@ pub fn define_virtual_table_with_find<'vtab, T: VTabFind<'vtab> + 'vtab>(
     let m = &Module {
         base: sqlite3_module {
             iVersion: 2,
+            xIntegrity: None,
+            xPreparedSql: None,
+            reserved: [None, None, None, None, None],
             xCreate: Some(rust_create::<T>),
             xConnect: Some(rust_connect::<T>),
             xBestIndex: Some(rust_best_index::<T>),
@@ -557,6 +569,9 @@ pub fn define_virtual_table_writeable<'vtab, T: VTabWriteable<'vtab> + 'vtab>(
     let m = &Module {
         base: sqlite3_module {
             iVersion: 2,
+            xIntegrity: None,
+            xPreparedSql: None,
+            reserved: [None, None, None, None, None],
             xCreate: Some(rust_create::<T>),
             xConnect: Some(rust_connect::<T>),
             xBestIndex: Some(rust_best_index::<T>),
@@ -617,6 +632,9 @@ pub fn define_virtual_table_writeable_with_transactions<
     let m = &Module {
         base: sqlite3_module {
             iVersion: 2,
+            xIntegrity: None,
+            xPreparedSql: None,
+            reserved: [None, None, None, None, None],
             xCreate: Some(rust_create::<T>),
             xConnect: Some(rust_connect::<T>),
             xBestIndex: Some(rust_best_index::<T>),
@@ -674,6 +692,9 @@ pub fn define_virtual_table_writeablex<'vtab, T: VTabWriteable<'vtab> + 'vtab>(
     let m = &Module {
         base: sqlite3_module {
             iVersion: 2,
+            xIntegrity: None,
+            xPreparedSql: None,
+            reserved: [None, None, None, None, None],
             xCreate: None,
             xConnect: Some(rust_connect::<T>),
             xBestIndex: Some(rust_best_index::<T>),

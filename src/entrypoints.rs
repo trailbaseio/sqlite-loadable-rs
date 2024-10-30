@@ -5,7 +5,8 @@ use crate::{
     ext::{faux_sqlite_extension_init2, sqlite3, sqlite3_api_routines},
 };
 
-use sqlite3ext_sys::SQLITE_OK;
+// use sqlite3ext_sys::SQLITE_OK;
+use libsql_ffi::SQLITE_OK;
 
 use std::os::raw::{c_char, c_uint};
 
@@ -25,7 +26,7 @@ where
         faux_sqlite_extension_init2(p_api);
     }
     match callback(db) {
-        Ok(()) => SQLITE_OK,
+        Ok(()) => SQLITE_OK as c_uint,
         Err(err) => err.code_extended(),
     }
 }

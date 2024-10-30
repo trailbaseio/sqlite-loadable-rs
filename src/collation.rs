@@ -8,7 +8,8 @@ use crate::{
 };
 use std::{ffi::CString, os::raw::c_void};
 
-use sqlite3ext_sys::SQLITE_UTF8;
+use libsql_ffi::SQLITE_UTF8;
+// use sqlite3ext_sys::SQLITE_UTF8;
 
 pub fn define_collation<F>(db: *mut sqlite3, name: &str, x_func: F) -> Result<()>
 where

@@ -172,25 +172,31 @@ pub fn sqlite3_seriesrs_init(db: *mut sqlite3) -> Result<()> {
 mod tests {
     use super::*;
 
-    use rusqlite::{ffi::sqlite3_auto_extension, Connection};
+    use libsql::ffi::sqlite3_auto_extension;
+    use libsql::Builder;
 
-    #[test]
-    fn test_rusqlite_auto_extension() {
+    #[tokio::test]
+    async fn test_libsql_auto_extension() {
+        let builder = Builder::new_local(":memory:").build().await.unwrap();
+
         unsafe {
             sqlite3_auto_extension(Some(std::mem::transmute(
                 sqlite3_seriesrs_init as *const (),
             )));
         }
 
-        let conn = Connection::open_in_memory().unwrap();
+        let conn = builder.connect().unwrap();
 
-        let result: Vec<i32> = conn
-            .prepare("select value from generate_series_rs(?, ?)")
-            .unwrap()
-            .query_map([1, 10], |r| r.get(0))
-            .unwrap()
-            .collect::<rusqlite::Result<Vec<_>, _>>()
+        let mut rows = conn
+            .query("select value from generate_series_rs(?, ?)", [1, 10])
+            .await
             .unwrap();
+
+        let mut result: Vec<i32> = vec![];
+        while let Some(row) = rows.next().await.unwrap() {
+            result.push(row.get(0).unwrap());
+        }
+
         assert_eq!(result, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     }
 }

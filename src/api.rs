@@ -17,7 +17,8 @@ use crate::ext::{
     sqlite3ext_value_subtype, sqlite3ext_value_text, sqlite3ext_value_type,
 };
 use crate::Error;
-use sqlite3ext_sys::{SQLITE_BLOB, SQLITE_FLOAT, SQLITE_INTEGER, SQLITE_NULL, SQLITE_TEXT};
+// use sqlite3ext_sys::{SQLITE_BLOB, SQLITE_FLOAT, SQLITE_INTEGER, SQLITE_NULL, SQLITE_TEXT};
+use libsql_ffi::{SQLITE_BLOB, SQLITE_FLOAT, SQLITE_INTEGER, SQLITE_NULL, SQLITE_TEXT};
 use std::os::raw::c_int;
 use std::slice::from_raw_parts;
 use std::str::Utf8Error;
@@ -214,7 +215,7 @@ pub enum ValueType {
 pub fn value_type(value: &*mut sqlite3_value) -> ValueType {
     let raw_type = unsafe { sqlite3ext_value_type(value.to_owned()) };
     // "as u32" because bindings for constants are u32 for some reason???
-    match raw_type as u32 {
+    match raw_type {
         SQLITE_TEXT => ValueType::Text,
         SQLITE_INTEGER => ValueType::Integer,
         SQLITE_FLOAT => ValueType::Float,
@@ -228,7 +229,7 @@ pub fn value_type(value: &*mut sqlite3_value) -> ValueType {
 }
 pub fn value_is_null(value: &*mut sqlite3_value) -> bool {
     let raw_type = unsafe { sqlite3ext_value_type(value.to_owned()) };
-    (raw_type as u32) == SQLITE_NULL
+    raw_type == SQLITE_NULL
 }
 
 pub fn value_subtype(value: &*mut sqlite3_value) -> u32 {

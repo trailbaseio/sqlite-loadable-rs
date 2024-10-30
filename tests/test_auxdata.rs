@@ -1,6 +1,5 @@
 use sqlite_loadable::prelude::*;
 use sqlite_loadable::{api, define_scalar_function, Result};
-use std::os::raw::c_void;
 
 pub fn check_auxdata(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) -> Result<()> {
     let label = api::value_text(values.get(0).unwrap()).unwrap();
@@ -29,30 +28,32 @@ pub fn sqlite3_test_auxdata_init(db: *mut sqlite3) -> Result<()> {
 mod tests {
     use super::*;
 
-    use rusqlite::{ffi::sqlite3_auto_extension, Connection};
+    use libsql::ffi::sqlite3_auto_extension;
+    use libsql::Builder;
 
-    #[test]
-    fn test_rusqlite_auto_extension() {
+    #[tokio::test]
+    async fn test_libsql_auto_extension() {
+        let builder = Builder::new_local(":memory:").build().await.unwrap();
+
         unsafe {
             sqlite3_auto_extension(Some(std::mem::transmute(
                 sqlite3_test_auxdata_init as *const (),
             )));
         }
 
-        let conn = Connection::open_in_memory().unwrap();
+        let conn = builder.connect().unwrap();
 
         // NOTE: even nested expressions are evaluated in different contexts leading to an
         // auxdata_get miss. auxdata_get/set is not suitable for naive caching across function
         // evaluations.
         let result: String = conn
-            .query_row(
-                "SELECT (check_auxdata(?1, check_auxdata(?2, ?3)))",
-                ("outer_label", "inner_label", "value"),
-                |row| {
-                    println!("ROW {row:?}");
-                    row.get(0)
-                },
-            )
+            .prepare("SELECT (check_auxdata(?1, check_auxdata(?2, ?3)))")
+            .await
+            .unwrap()
+            .query_row(["outer_label", "inner_label", "value"])
+            .await
+            .unwrap()
+            .get(0)
             .unwrap();
 
         assert_eq!(result, "outer_label=inner_label=value");

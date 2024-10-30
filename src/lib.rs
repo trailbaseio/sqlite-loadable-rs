@@ -19,7 +19,7 @@ pub mod vtab_argparse;
 pub use errors::{Error, ErrorKind, Result};
 
 #[doc(inline)]
-pub use scalar::{define_scalar_function, define_scalar_function_with_aux, FunctionFlags};
+pub use scalar::{define_scalar_function, define_scalar_void_function, define_scalar_function_with_aux, FunctionFlags};
 
 #[doc(inline)]
 pub use collation::define_collation;

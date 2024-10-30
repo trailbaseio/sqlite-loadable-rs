@@ -137,24 +137,38 @@ pub fn sqlite3_find_init(db: *mut sqlite3) -> Result<()> {
 mod tests {
     use super::*;
 
-    use rusqlite::{ffi::sqlite3_auto_extension, Connection};
+    use libsql::ffi::sqlite3_auto_extension;
+    use libsql::Builder;
 
-    #[test]
-    fn test_rusqlite_auto_extension() {
+    #[tokio::test]
+    async fn test_libsql_auto_extension() {
+        let builder = Builder::new_local(":memory:").build().await.unwrap();
+
         unsafe {
             sqlite3_auto_extension(Some(std::mem::transmute(sqlite3_find_init as *const ())));
         }
 
-        let db = Connection::open_in_memory().unwrap();
+        let db = builder.connect().unwrap();
 
         assert_eq!(
-            db.query_row("select a from find", [], |row| row.get::<usize, String>(0))
+            db.prepare("select a from find")
+                .await
+                .unwrap()
+                .query_row(())
+                .await
+                .unwrap()
+                .get::<String>(0)
                 .unwrap(),
             "Bare A access!"
         );
         assert_eq!(
-            db.query_row("select wrapped(a) from find", [], |row| row
-                .get::<usize, String>(0))
+            db.prepare("select wrapped(a) from find")
+                .await
+                .unwrap()
+                .query_row(())
+                .await
+                .unwrap()
+                .get::<String>(0)
                 .unwrap(),
             "Wrapped access! Bare A access!"
         );

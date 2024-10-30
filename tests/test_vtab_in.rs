@@ -183,50 +183,68 @@ pub fn sqlite3_in_init(db: *mut sqlite3) -> Result<()> {
 mod tests {
     use super::*;
 
-    use rusqlite::{ffi::sqlite3_auto_extension, Connection};
+    use libsql::ffi::sqlite3_auto_extension;
+    use libsql::{Builder, Connection};
 
-    fn query_plan(db: &Connection, sql: &str) -> String {
-        db.query_row(format!("explain query plan {}", sql).as_str(), [], |row| {
-            row.get("detail")
-        })
-        .unwrap()
+    async fn query_plan(db: &Connection, sql: &str) -> String {
+        let row = db
+            .prepare(&format!("explain query plan {}", sql))
+            .await
+            .unwrap()
+            .query_row(())
+            .await
+            .unwrap();
+
+        row.get(3).unwrap()
     }
 
-    #[test]
-    fn test_rusqlite_auto_extension() {
+    #[tokio::test]
+    async fn test_libsql_auto_extension() {
+        let builder = Builder::new_local(":memory:").build().await.unwrap();
+
         unsafe {
             sqlite3_auto_extension(Some(std::mem::transmute(sqlite3_in_init as *const ())));
         }
 
-        let db = Connection::open_in_memory().unwrap();
+        let db = builder.connect().unwrap();
 
         assert_eq!(
-            query_plan(&db, "select * from vtab_in"),
+            query_plan(&db, "select * from vtab_in").await,
             "SCAN vtab_in VIRTUAL TABLE INDEX 1:"
         );
         assert_eq!(
-            query_plan(&db, "select * from vtab_in(1)"),
+            query_plan(&db, "select * from vtab_in(1)").await,
             "SCAN vtab_in VIRTUAL TABLE INDEX 1:x"
         );
         assert_eq!(
-            query_plan(&db, "select * from vtab_in where y in (1,2,3)"),
+            query_plan(&db, "select * from vtab_in where y in (1,2,3)").await,
             "SCAN vtab_in VIRTUAL TABLE INDEX 1:Y"
         );
         assert_eq!(
-            query_plan(&db, "select * from vtab_in where y = 1"),
+            query_plan(&db, "select * from vtab_in where y = 1").await,
             "SCAN vtab_in VIRTUAL TABLE INDEX 1:y"
         );
         // TODO test when sqlite version is 3.37 or less
 
         let a: String = db
-            .query_row("select a from vtab_in where y = 1", [], |row| row.get(0))
+            .prepare("select a from vtab_in where y = 1")
+            .await
+            .unwrap()
+            .query_row(())
+            .await
+            .unwrap()
+            .get(0)
             .unwrap();
         assert_eq!(a, "");
 
         let a: String = db
-            .query_row("select a from vtab_in where y in (1,2,3)", [], |row| {
-                row.get(0)
-            })
+            .prepare("select a from vtab_in where y in (1,2,3)")
+            .await
+            .unwrap()
+            .query_row(())
+            .await
+            .unwrap()
+            .get(0)
             .unwrap();
         assert_eq!(a, "123");
     }

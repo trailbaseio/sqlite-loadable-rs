@@ -21,20 +21,23 @@ pub fn sqlite3_test_collation_init(db: *mut sqlite3) -> Result<()> {
 mod tests {
     use super::*;
 
-    use rusqlite::{ffi::sqlite3_auto_extension, Connection};
+    use libsql::ffi::sqlite3_auto_extension;
+    use libsql::Builder;
 
-    #[test]
-    fn test_rusqlite_auto_extension() {
+    #[tokio::test]
+    async fn test_libsql_auto_extension() {
+        let builder = Builder::new_local(":memory:").build().await.unwrap();
+
         unsafe {
             sqlite3_auto_extension(Some(std::mem::transmute(
                 sqlite3_test_collation_init as *const (),
             )));
         }
 
-        let conn = Connection::open_in_memory().unwrap();
+        let conn = builder.connect().unwrap();
 
         let result: String = conn
-            .query_row(
+            .prepare(
                 "
             with ordered as (
               select value
@@ -43,11 +46,15 @@ mod tests {
             )
             select json_group_array(value) from ordered
             ",
-                [r#"[
-                  "xxxc", "yyyb", "zzza"
-                ]"#],
-                |x| x.get(0),
             )
+            .await
+            .unwrap()
+            .query_row([r#"[
+                  "xxxc", "yyyb", "zzza"
+                ]"#])
+            .await
+            .unwrap()
+            .get(0)
             .unwrap();
 
         assert_eq!(result, "[\"zzza\",\"yyyb\",\"xxxc\"]");
